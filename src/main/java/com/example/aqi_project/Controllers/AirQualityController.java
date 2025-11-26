@@ -7,7 +7,9 @@ package com.example.aqi_project.Controllers;
 import com.example.aqi_project.DTOs.ApiResponse;
 import com.example.aqi_project.DTOs.SearchRequest;
 import com.example.aqi_project.Models.AirQualityData;
+import com.example.aqi_project.Models.FavoriteCity;
 import com.example.aqi_project.Service.CachedAirQualityService;
+import com.example.aqi_project.Service.FavoritesService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -123,5 +125,45 @@ public class AirQualityController {
     public ResponseEntity<ApiResponse<CachedAirQualityService.DetailedCacheInfo>> getDetailedCacheInfo() {
         return ResponseEntity.ok(ApiResponse.success(cachedAirQualityService.getDetailedCacheInfo()));
     }
+    //Extra Feature
+
+    @PostMapping("/favorites")
+    public ResponseEntity<ApiResponse<FavoriteCity>> addFavorite(
+            @RequestBody Map<String, String> request) {
+        try {
+            String city = request.get("city");
+            FavoriteCity favorite = FavoritesService.addFavorite(city);
+            return ResponseEntity.ok(ApiResponse.success(favorite, "City added to favorites"));
+        } catch (Exception e) {
+            log.error("Error adding favorite city: {}", request.get("city"), e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to add favorite city"));
+        }
+    }
+
+    @DeleteMapping("/favorites/{city}")
+    public ResponseEntity<ApiResponse<Void>> removeFavorite(@PathVariable String city) {
+        try {
+            FavoritesService.removeFavorite(city);
+            return ResponseEntity.ok(ApiResponse.success(null, "City removed from favorites"));
+        } catch (Exception e) {
+            log.error("Error removing favorite city: {}", city, e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to remove favorite city"));
+        }
+    }
+
+    @GetMapping("/favorites")
+    public ResponseEntity<ApiResponse<List<FavoriteCity>>> getFavorites() {
+        try {
+            List<FavoriteCity> favorites = FavoritesService.getFavorites();
+            return ResponseEntity.ok(ApiResponse.success(favorites));
+        } catch (Exception e) {
+            log.error("Error getting favorites", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Failed to get favorites"));
+        }
+    }
+
 }
 
