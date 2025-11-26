@@ -72,6 +72,7 @@ public class AqicnService implements AirQualityService {
 
 
 
+
     private AirQualityData convertToDomainModel(AqicnResponse response) {
         AqicnResponse.Data data = response.getData();
 
@@ -86,6 +87,7 @@ public class AqicnService implements AirQualityService {
 
         String quality = determineQualityLevel(data.getAqi());
         String dominantPollutant = determineDominantPollutant(pollutants);
+        AirQualityData.WeatherData weatherData = extractWeatherData(pollutants);
 
         log.info("Successfully converted data for {}: AQI={}, Quality={}",
                 data.getCity().getName(), data.getAqi(), quality);
@@ -97,9 +99,89 @@ public class AqicnService implements AirQualityService {
                 dominantPollutant,
                 pollutants,
                 java.time.LocalDateTime.now(),
-                null
+                weatherData
+
+
         );
     }
+
+
+    private AirQualityData.WeatherData extractWeatherData(Map<String, Double> pollutants) {
+        if (pollutants == null || pollutants.isEmpty()) {
+            return null;
+        }
+
+        AirQualityData.WeatherData weatherData = new AirQualityData.WeatherData();
+
+        try {
+            // Temperature (°C) - 't' parameter
+            if (pollutants.containsKey("t")) {
+                weatherData.setTemperature(pollutants.get("t"));
+            }
+
+            // Humidity (%) - 'h' parameter
+            if (pollutants.containsKey("h")) {
+                weatherData.setHumidity(pollutants.get("h"));
+            }
+
+            // Pressure (hPa) - 'p' parameter
+            if (pollutants.containsKey("p")) {
+                weatherData.setPressure(pollutants.get("p"));
+            }
+
+            // Wind Speed (m/s or km/h) - 'w' parameter
+            if (pollutants.containsKey("w")) {
+                weatherData.setWindSpeed(pollutants.get("w"));
+            }
+
+            // Wind Direction - check for common wind direction parameters
+            String windDirection = determineWindDirection(pollutants);
+            weatherData.setWindDirection(windDirection);
+
+        } catch (Exception e) {
+            log.warn("Error extracting weather data from pollutants: {}", e.getMessage());
+            // Return the partially populated weather data instead of null
+        }
+
+        // Return null only if no weather data was extracted at all
+        if (weatherData.getTemperature() == null &&
+                weatherData.getHumidity() == null &&
+                weatherData.getPressure() == null &&
+                weatherData.getWindSpeed() == null) {
+            return null;
+        }
+
+        return weatherData;
+    }
+
+    private String determineWindDirection(Map<String, Double> pollutants) {
+        // Check for common wind direction parameters in AQICN API
+        if (pollutants.containsKey("wd")) {
+            Double windDegrees = pollutants.get("wd");
+            if (windDegrees != null) {
+                return convertDegreesToDirection(windDegrees);
+            }
+        }
+
+        // Check for other possible wind direction parameters
+
+
+        // If no wind direction data is available
+        return "NA";
+    }
+
+    private String convertDegreesToDirection(Double degrees) {
+        if (degrees == null) return "N/A";
+
+        // Convert degrees to compass direction
+        String[] directions = {"N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"};
+        int index = (int) ((degrees + 11.25) / 22.5) % 16;
+        return directions[index];
+    }
+
+
+
 
     private String determineQualityLevel(Integer aqi) {
         if (aqi == null) return "Unknown";
@@ -117,4 +199,5 @@ public class AqicnService implements AirQualityService {
                 .map(Map.Entry::getKey)
                 .orElse("Unknown");
     }
+
 }
