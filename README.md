@@ -31,7 +31,11 @@ A Spring Boot application that provides real-time air quality data for cities wo
 
 ##  Frontend UI 
 <img width="850" height="550" alt="9" src="https://github.com/user-attachments/assets/611f1599-e99a-4350-b3d0-50f209ec9c94" />
+
 <img width="850" height="550" alt="8" src="https://github.com/user-attachments/assets/4ce6e355-238b-45a3-aa8b-bad8c911765b" />
+
+## Faviorate_City_AQI(EXTRA FEATURE)
+<img width="804" height="468" alt="image" src="https://github.com/user-attachments/assets/ee5f4203-25a9-4ecf-8764-02251fda0b35" />
 
 
 ## Searh_With_City_Name API
