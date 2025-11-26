@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .search-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #667eea;
+        }
+
+        .search-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .search-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .search-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #f56565;
+        }
+
+        .data-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .city-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f3f4;
+        }
+
+        .city-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .timestamp {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .aqi-section {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .aqi-circle {
+            width: 100px;
+            height: 100px;
+            border: 4px solid;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .aqi-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .aqi-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .aqi-emoji {
+            position: absolute;
+            bottom: -10px;
+            font-size: 1.2rem;
+        }
+
+        .quality-info h3 {
+            font-size: 1.4rem;
+            margin-bottom: 5px;
+        }
+
+        .dominant-pollutant {
+            color: #666;
+        }
+
+        .pollutants-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .pollutant-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+
+        .pollutant-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .pollutant-name {
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .pollutant-value {
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .weather-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .weather-icon {
+            font-size: 1.2rem;
+        }
+
+        .weather-info {
+            flex: 1;
+        }
+
+        .weather-label {
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        .weather-value {
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            margin: 25px 0 15px 0;
+            color: #2d3748;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .cache-stats {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .search-form {
+                flex-direction: column;
+            }
+
+            .aqi-section {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .city-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🌤️ Air Quality Monitor</h1>
+        <p>Get real-time air quality data for any city worldwide</p>
+    </div>
+
+    <div class="search-box">
+        <form class="search-form" id="searchForm">
+            <input
+                    type="text"
+                    class="search-input"
+                    id="cityInput"
+                    placeholder="Enter city name (e.g., Berlin, London, Paris)..."
+                    required
+            >
+            <button type="submit" class="search-button" id="searchButton">
+                Search Air Quality
+            </button>
+        </form>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>Fetching air quality data...</p>
+    </div>
+
+    <div id="error" class="error" style="display: none;"></div>
+
+    <div id="dataCard" class="data-card" style="display: none;">
+        <!-- Air quality data will be inserted here -->
+    </div>
+
+    <div id="cacheStats" class="cache-stats" style="display: none;">
+        <h3 class="section-title">Cache Performance</h3>
+        <div class="stats-grid" id="statsGrid">
+            <!-- Cache stats will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Configuration
+    const API_BASE_URL = 'http://localhost:8080/api/v1/air-quality';
+
+    // DOM Elements
+    const searchForm = document.getElementById('searchForm');
+    const cityInput = document.getElementById('cityInput');
+    const searchButton = document.getElementById('searchButton');
+    const loading = document.getElementById('loading');
+    const error = document.getElementById('error');
+    const dataCard = document.getElementById('dataCard');
+    const cacheStats = document.getElementById('cacheStats');
+    const statsGrid = document.getElementById('statsGrid');
+
+    // Event Listeners
+    searchForm.addEventListener('submit', handleSearch);
+
+    // Functions
+    async function handleSearch(event) {
+        event.preventDefault();
+
+        const city = cityInput.value.trim();
+        if (!city) return;
+
+        showLoading();
+        hideError();
+        hideDataCard();
+        hideCacheStats();
+
+        try {
+            const airQualityData = await searchAirQuality(city);
+            displayAirQualityData(airQualityData);
+
+            // Also fetch cache stats
+            const cacheStatsData = await getCacheStats();
+            displayCacheStats(cacheStatsData);
+
+        } catch (err) {
+            showError(err.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async function searchAirQuality(city) {
+        const response = await fetch(`${API_BASE_URL}/search`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ city })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Failed to fetch air quality data');
+        }
+
+        return data.data;
+    }
+
+    async function getCacheStats() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/cache/stats`);
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                return data.data;
+            }
+            return null;
+        } catch (err) {
+            console.error('Failed to fetch cache stats:', err);
+            return null;
+        }
+    }
+
+    function displayAirQualityData(data) {
+        const aqiColor = getAqiColor(data.aqi);
+        const aqiEmoji = getAqiEmoji(data.aqi);
+        const formattedTime = formatTimestamp(data.timestamp);
+
+        const html = `
+                <div class="city-header">
+                    <div>
+                        <div class="city-name">${data.city}</div>
+                        <div class="timestamp">Last updated: ${formattedTime}</div>
+                    </div>
+                </div>
+
+                <div class="aqi-section">
+                    <div class="aqi-circle" style="border-color: ${aqiColor}">
+                        <span class="aqi-value">${data.aqi}</span>
+                        <span class="aqi-label">AQI</span>
+                        <span class="aqi-emoji">${aqiEmoji}</span>
+                    </div>
+                    <div class="quality-info">
+                        <h3 style="color: ${aqiColor}">${data.quality}</h3>
+                        <p class="dominant-pollutant">Dominant Pollutant: <strong>${data.dominantPollutant || 'N/A'}</strong></p>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Pollutant Levels</h3>
+                <div class="pollutants-grid">
+                    ${Object.entries(data.pollutants || {}).map(([pollutant, value]) => `
+                        <div class="pollutant-item">
+                            <span class="pollutant-name">${pollutant.toUpperCase()}</span>
+                            <span class="pollutant-value">${typeof value === 'number' ? value.toFixed(2) : value}</span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                ${data.weather ? `
+                    <h3 class="section-title">Weather Conditions</h3>
+                    <div class="weather-grid">
+                        ${data.weather.temperature ? `
+                            <div class="weather-item">
+                                <span class="weather-icon">🌡️</span>
+                                <div class="weather-info">
+                                    <div class="weather-label">Temperature</div>
+                                    <div class="weather-value">${data.weather.temperature}°C</div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${data.weather.humidity ? `
+                            <div class="weather-item">
+                                <span class="weather-icon">💧</span>
+                                <div class="weather-info">
+                                    <div class="weather-label">Humidity</div>
+                                    <div class="weather-value">${data.weather.humidity}%</div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${data.weather.pressure ? `
+                            <div class="weather-item">
+                                <span class="weather-icon">🌡️</span>
+                                <div class="weather-info">
+                                    <div class="weather-label">Pressure</div>
+                                    <div class="weather-value">${data.weather.pressure} hPa</div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${data.weather.windSpeed ? `
+                            <div class="weather-item">
+                                <span class="weather-icon">💨</span>
+                                <div class="weather-info">
+                                    <div class="weather-label">Wind Speed</div>
+                                    <div class="weather-value">${data.weather.windSpeed} m/s</div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${data.weather.windDirection ? `
+                            <div class="weather-item">
+                                <span class="weather-icon">🧭</span>
+                                <div class="weather-info">
+                                    <div class="weather-label">Wind Direction</div>
+                                    <div class="weather-value">${data.weather.windDirection}</div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+            `;
+
+        dataCard.innerHTML = html;
+        showDataCard();
+    }
+
+    function displayCacheStats(stats) {
+        if (!stats) return;
+
+        const hitRatePercentage = (stats.hitRatio * 100).toFixed(1);
+
+        const html = `
+                <div class="stat-item">
+                    <div class="stat-value">${stats.hits}</div>
+                    <div class="stat-label">Cache Hits</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.misses}</div>
+                    <div class="stat-label">Cache Misses</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${hitRatePercentage}%</div>
+                    <div class="stat-label">Hit Rate</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.size}</div>
+                    <div class="stat-label">Current Size</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.maxSize || 1000}</div>
+                    <div class="stat-label">Max Capacity</div>
+                </div>
+                ${stats.evictions !== undefined ? `
+                    <div class="stat-item">
+                        <div class="stat-value">${stats.evictions}</div>
+                        <div class="stat-label">Total Evictions</div>
+                    </div>
+                ` : ''}
+            `;
+
+        statsGrid.innerHTML = html;
+        showCacheStats();
+    }
+
+    // Helper functions
+    function getAqiColor(aqi) {
+        if (aqi <= 50) return '#4CAF50'; // Good - Green
+        if (aqi <= 100) return '#FFEB3B'; // Moderate - Yellow
+        if (aqi <= 150) return '#FF9800'; // Unhealthy for Sensitive - Orange
+        if (aqi <= 200) return '#F44336'; // Unhealthy - Red
+        if (aqi <= 300) return '#9C27B0'; // Very Unhealthy - Purple
+        return '#795548'; // Hazardous - Brown
+    }
+
+    function getAqiEmoji(aqi) {
+        if (aqi <= 50) return '😊';
+        if (aqi <= 100) return '😐';
+        if (aqi <= 150) return '😷';
+        if (aqi <= 200) return '😨';
+        if (aqi <= 300) return '😱';
+        return '💀';
+    }
+
+    function formatTimestamp(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    // UI State Management
+    function showLoading() {
+        loading.style.display = 'block';
+        searchButton.disabled = true;
+        searchButton.textContent = 'Searching...';
+    }
+
+    function hideLoading() {
+        loading.style.display = 'none';
+        searchButton.disabled = false;
+        searchButton.textContent = 'Search Air Quality';
+    }
+
+    function showError(message) {
+        error.textContent = message;
+        error.style.display = 'block';
+    }
+
+    function hideError() {
+        error.style.display = 'none';
+    }
+
+    function showDataCard() {
+        dataCard.style.display = 'block';
+    }
+
+    function hideDataCard() {
+        dataCard.style.display = 'none';
+    }
+
+    function showCacheStats() {
+        cacheStats.style.display = 'block';
+    }
+
+    function hideCacheStats() {
+        cacheStats.style.display = 'none';
+    }
+
+    // Initialize with a default city
+    window.addEventListener('load', () => {
+        cityInput.value = 'Berlin';
+    });
+</script>
+</body>
+</html>
