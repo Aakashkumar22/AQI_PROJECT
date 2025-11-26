@@ -29,7 +29,9 @@ A Spring Boot application that provides real-time air quality data for cities wo
 ```
 ## Results
 ## Searh_With_City_Name API
-<img width="800" height="550" alt="1" src="https://github.com/user-attachments/assets/39b88115-54f6-4d9b-9023-720484b0051b" />
+<img width="745" height="448" alt="image" src="https://github.com/user-attachments/assets/9ab6202e-97c5-4f4b-88af-433b9a9eebca" />
+
+
 
 ## Cache status API
 <img width="800" height="550" alt="image" src="https://github.com/user-attachments/assets/64c13231-926e-4057-a4d8-c8785c9301dd" />
